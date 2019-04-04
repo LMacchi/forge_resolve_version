@@ -8,7 +8,7 @@ Limitations:
 so dependencies with specific versions won't be matched
 - Lines not matching Forge modules might end up out of order
 
-Usage: forge_resolve_version.rb -i /path/to/original/Puppetfile [-o /path/to/new/Puppetfile]
+`Usage: forge_resolve_version.rb -i /path/to/original/Puppetfile [-o /path/to/new/Puppetfile]`
 
 ```
 [root@agent1 ~]# ./forge_resolve_version.rb -i Puppetfile -o new_pf
