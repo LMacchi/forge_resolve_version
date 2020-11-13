@@ -6,18 +6,19 @@ require 'json'
 require 'optparse'
 
 class ForgeModule
-  attr_accessor :name, :version, :found, :depr, :deps
+  attr_accessor :name, :latest_version, :current_version, :found, :depr, :deps
 
   def initialize
     @name    = ''
-    @version = ''
+    @current_version = ''
+    @latest_version = ''
     @found   = true
     @depr    = false
     @deps    = []
   end
 
   def return_line(mod)
-    return "mod '#{mod.name}', '#{mod.version}'"
+    return "mod '#{mod.name}', '#{mod.latest_version}'"
   end
 
   def warn_nf(mod)
@@ -35,7 +36,7 @@ class ForgeVersions
   attr_accessor :mods_read, :lines, :data
 
   def initialize
-    @mods_read  = []
+    @mods_read  = {}
     @lines      = []
     @data       = {}
   end
@@ -44,6 +45,12 @@ class ForgeVersions
     if mod =~ /^\s*mod\s+('|")(\w+[\/-]\w+)('|"),\s+\S+/
       return $2
     elsif mod =~ /^\s*mod\s+('|")(\w+[\/-]\w+)('|")$/
+      return $2
+    end
+  end
+
+  def get_mod_ver(mod)
+    if mod =~ /('|")([0-9].+)('|")/
       return $2
     end
   end
@@ -63,15 +70,16 @@ class ForgeVersions
 
 
   def read_puppetfile(input)
-    mods_read = []
+    mods_read = {}
     lines = []
     # Read modules from Puppetfile
-    file_in = File.open(input, "r") do |fh|
+    File.open(input, "r") do |fh|
       fh.each_line do |line|
         line.chomp!
         name = get_mod_name(line)
         if name
-          mods_read.push(name) unless mods_read.include? name
+          ver = get_mod_ver(line)
+          mods_read[name] = ver unless mods_read.keys.include? name
         else
           lines.push(line)
         end
@@ -85,10 +93,14 @@ class ForgeVersions
   def load_modules(mods)
     data = []
     # Search retrieved modules
-    mods.each do |mod|
+    puts "Go get some tea while I process Puppetfile"
+    puts ""
+    puts ""
+    mods.each do |mod, ver|
       _mod = mod.gsub(/\//,'-')
       m = ForgeModule.new
       m, data = findModuleData(_mod, data)
+      m.current_version = ver
       data.push(m) unless mod_exists?(_mod,data)
     end
     return data
@@ -99,7 +111,6 @@ class ForgeVersions
   def findModuleData(mod, data)
     m = ForgeModule.new
     m.name = mod
-    puts "Processing module #{mod}"
     url = "https://forgeapi.puppet.com:443/v3/modules/#{mod}"
     uri = URI.parse(url)
 
@@ -114,12 +125,12 @@ class ForgeVersions
       parsed = JSON.parse(response.body)
       if parsed["current_release"] != nil
         m.found = true
-        m.version = parsed["current_release"]["version"]
+        m.latest_version = parsed["current_release"]["version"]
         m.depr = is_depr?(parsed["current_release"]["version"])
         deps = parsed["current_release"]["metadata"]["dependencies"]
         if deps.any? and ! m.depr
-          deps.each do |mod|
-            name = mod['name'].gsub(/\//,'-')
+          deps.each do |dep_mod|
+            name = dep_mod['name'].gsub(/\//,'-')
             m.deps.push(name)
             unless mod_exists?(name,data)
               n, data = findModuleData(name, data)
@@ -186,8 +197,9 @@ def validate_options(options, help)
 end
 
 def write_response(output, lines, data)
-  forge = lines.grep /^forge/i
-  file_out = File.open(output, "w") do |fh|
+  forge = lines.grep(/^forge/i)
+  puts "These modules have been upgraded:"
+  File.open(output, "w") do |fh|
     if forge.any? 
       fh.puts forge.first
       fh.puts ""
@@ -198,22 +210,24 @@ def write_response(output, lines, data)
       elsif mod.depr
         puts mod.warn_depr(mod)
       else
-        fh.puts mod.return_line(mod)
+        if ! mod.current_version.empty?
+          puts "Module #{mod.name} - #{mod.current_version} -> #{mod.latest_version}" unless mod.current_version == mod.latest_version
+          fh.puts mod.return_line(mod)
+        end
       end
     end
     fh.puts lines - forge
+    "Your Puppetfile is now available at #{output}"
   end
 end
 
 # Set variables
 options, help = parse_options()
-input, output, outdir = validate_options(options, help)
+input, output = validate_options(options, help)
 f = ForgeVersions.new
 
 f.mods_read, f.lines = f.read_puppetfile(input)
 f.data = f.load_modules(f.mods_read)
-# Now I have an array of modules
 
 write_response(output, f.lines, f.data)
 exit 0
-
