@@ -6,15 +6,16 @@ require 'json'
 require 'optparse'
 
 class ForgeModule
-  attr_accessor :name, :latest_version, :current_version, :found, :depr, :deps
+  attr_accessor :name, :current_version, :latest_version, :original, :found, :depr, :deps
 
   def initialize
-    @name    = ''
+    @name            = ''
     @current_version = ''
-    @latest_version = ''
-    @found   = true
-    @depr    = false
-    @deps    = []
+    @latest_version  = ''
+    @original        = false
+    @found           = true
+    @depr            = false
+    @deps            = []
   end
 
   def return_line(mod)
@@ -93,14 +94,13 @@ class ForgeVersions
   def load_modules(mods)
     data = []
     # Search retrieved modules
-    puts "Go get some tea while I process Puppetfile"
-    puts ""
-    puts ""
+    puts "#### Go get some tea while I process the Puppetfile ####"
     mods.each do |mod, ver|
       _mod = mod.gsub(/\//,'-')
       m = ForgeModule.new
       m, data = findModuleData(_mod, data)
       m.current_version = ver
+      m.original = true
       data.push(m) unless mod_exists?(_mod,data)
     end
     return data
@@ -197,27 +197,39 @@ def validate_options(options, help)
 end
 
 def write_response(output, lines, data)
+  warnings = {}
+  warnings['not_found'] = []
+  warnings['deprecated'] = []
   forge = lines.grep(/^forge/i)
-  puts "These modules have been upgraded:"
+  puts "\n\n#### These modules have been upgraded ####"
   File.open(output, "w") do |fh|
     if forge.any? 
       fh.puts forge.first
       fh.puts ""
     end
     data.each do |mod|
-      if ! mod.found 
-        puts mod.warn_nf(mod)
+      if ! mod.found
+        warnings['not_found'].push mod.name
       elsif mod.depr
-        puts mod.warn_depr(mod)
+        warnings['deprecated'].push mod.name
       else
-        if ! mod.current_version.empty?
+        if mod.current_version
           puts "Module #{mod.name} - #{mod.current_version} -> #{mod.latest_version}" unless mod.current_version == mod.latest_version
           fh.puts mod.return_line(mod)
         end
       end
     end
+    puts "\n\n#### These modules have been added ####"
+    data.select { |m| m.original == false }.each do |a|
+      puts "Module #{a.name} #{a.latest_version}"
+    end
+    puts "\n\n#### Modules not found and removed from Puppetfile ####"
+    puts warnings['not_found'].join("\n")
+    puts "\n\n#### Deprecated modules removed from Puppetfile ####"
+    puts warnings['deprecated'].join("\n")
+
     fh.puts lines - forge
-    "Your Puppetfile is now available at #{output}"
+    puts "\n#### Your Puppetfile is now available at #{output} ####"
   end
 end
 
