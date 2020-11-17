@@ -8,19 +8,33 @@ Limitations:
 so dependencies with specific versions won't be matched
 - Lines not matching Forge modules might end up out of order
 
-`Usage: forge_resolve_version.rb -i /path/to/original/Puppetfile [-o /path/to/new/Puppetfile]`
+Usage: forge\_resolve\_version.rb -i /path/to/original/Puppetfile [-o /path/to/new/Puppetfile]
 
 ```
-[root@agent1 ~]# ./forge_resolve_version.rb -i Puppetfile -o new_pf
-Processing module saz-ssh
-Processing module puppetlabs-stdlib
-Processing module puppetlabs-concat
-Processing module puppetlabs-apache
-Processing module puppetlabs-mysql
-Processing module puppet-staging
-Processing module puppet-staging
-Processing module blah-bleh
-Processing module wdijkerman-zabbix
-Warning: blah-bleh was not found
-Warning: wdijkerman-zabbix is deprecated
+★ lmacchi@lmacchi-mbp-7295b 15:19:00 ~> ./forge_resolve_version.rb -i Puppetfile -o new_pf
+#### Go get some tea while I process the Puppetfile ####
+
+
+#### These modules have been upgraded ####
+Module saz-ssh - 3.0.1 -> 6.2.0
+Module puppetlabs-apache - 1.11.0 -> 5.6.0
+Module puppet-staging - 2.2.0 -> 3.2.0
+Module puppetlabs-powershell - 1.0.6 -> 4.0.0
+
+
+#### These modules have been added ####
+Module puppetlabs-stdlib 6.5.0
+Module puppetlabs-translate 2.2.0
+Module puppetlabs-concat 6.2.0
+Module puppetlabs-puppetserver_gem 1.1.1
+Module puppetlabs-resource_api 1.1.0
+Module puppetlabs-pwshlib 0.5.1
+
+
+#### Modules not found and removed from Puppetfile ####
+Module blah-bleh
+
+
+#### Deprecated modules removed from Puppetfile ####
+Module wdijkerman-zabbix
 ```

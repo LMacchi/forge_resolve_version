@@ -1,11 +1,16 @@
 forge "http://forge.puppetlabs.com"
 
-mod 'puppetlabs-stdlib', '4.19.0'
-mod 'puppetlabs-concat', '4.0.1'
-mod 'saz-ssh', '3.0.1'
-mod 'puppetlabs-apache', '2.0.0'
-mod 'puppet-staging', '2.2.0'
-mod 'puppetlabs-mysql', '3.11.0'
+mod 'puppetlabs-stdlib', '6.5.0'
+mod 'puppetlabs-translate', '2.2.0'
+mod 'puppetlabs-concat', '6.2.0'
+mod 'saz-ssh', '6.2.0'
+mod 'puppetlabs-apache', '5.6.0'
+mod 'puppetlabs-puppetserver_gem', '1.1.1'
+mod 'puppetlabs-resource_api', '1.1.0'
+mod 'puppetlabs-mysql', '10.8.0'
+mod 'puppet-staging', '3.2.0'
+mod 'puppetlabs-pwshlib', '0.5.1'
+mod 'puppetlabs-powershell', '4.0.0'
 
 
 # Install puppetlabs/apache and keep it up to date with 'master'
