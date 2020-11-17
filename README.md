@@ -16,15 +16,9 @@ Usage: forge\_resolve\_version.rb -i /path/to/original/Puppetfile [-o /path/to/n
 
 
 #### These modules have been upgraded ####
-Module puppetlabs-stdlib -  -> 6.5.0
-Module puppetlabs-translate -  -> 2.2.0
-Module puppetlabs-concat -  -> 6.2.0
 Module saz-ssh - 3.0.1 -> 6.2.0
 Module puppetlabs-apache - 1.11.0 -> 5.6.0
-Module puppetlabs-puppetserver_gem -  -> 1.1.1
-Module puppetlabs-resource_api -  -> 1.1.0
 Module puppet-staging - 2.2.0 -> 3.2.0
-Module puppetlabs-pwshlib -  -> 0.5.1
 Module puppetlabs-powershell - 1.0.6 -> 4.0.0
 
 
@@ -38,11 +32,9 @@ Module puppetlabs-pwshlib 0.5.1
 
 
 #### Modules not found and removed from Puppetfile ####
-blah-bleh
+Module blah-bleh
 
 
 #### Deprecated modules removed from Puppetfile ####
-wdijkerman-zabbix
-
-#### Your Puppetfile is now available at new_pf ####
+Module wdijkerman-zabbix
 ```

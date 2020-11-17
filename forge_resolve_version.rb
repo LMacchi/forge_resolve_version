@@ -99,7 +99,7 @@ class ForgeVersions
       _mod = mod.gsub(/\//,'-')
       m = ForgeModule.new
       m, data = findModuleData(_mod, data)
-      m.current_version = ver
+      m.current_version = ver || ""
       m.original = true
       data.push(m) unless mod_exists?(_mod,data)
     end
@@ -197,39 +197,62 @@ def validate_options(options, help)
 end
 
 def write_response(output, lines, data)
-  warnings = {}
-  warnings['not_found'] = []
-  warnings['deprecated'] = []
+  # Write Forge line
   forge = lines.grep(/^forge/i)
-  puts "\n\n#### These modules have been upgraded ####"
   File.open(output, "w") do |fh|
     if forge.any? 
       fh.puts forge.first
       fh.puts ""
     end
+
+    # Create some filtered arrays
+    upgraded = data.select { |m| ((! m.current_version.empty?) and (m.found) and (! m.depr) and (m.current_version != m.latest_version)) }
+    added = data.select { |m| ! m.original }
+    not_found = data.select { |m| ! m.found }
+    deprecated = data.select { |m| m.depr }
+
+    # Write Puppet file
     data.each do |mod|
-      if ! mod.found
-        warnings['not_found'].push mod.name
-      elsif mod.depr
-        warnings['deprecated'].push mod.name
-      else
-        if mod.current_version
-          puts "Module #{mod.name} - #{mod.current_version} -> #{mod.latest_version}" unless mod.current_version == mod.latest_version
-          fh.puts mod.return_line(mod)
-        end
+      if mod.current_version and mod.found and ! mod.depr
+        fh.puts mod.return_line(mod)
       end
     end
-    puts "\n\n#### These modules have been added ####"
-    data.select { |m| m.original == false }.each do |a|
-      puts "Module #{a.name} #{a.latest_version}"
-    end
-    puts "\n\n#### Modules not found and removed from Puppetfile ####"
-    puts warnings['not_found'].join("\n")
-    puts "\n\n#### Deprecated modules removed from Puppetfile ####"
-    puts warnings['deprecated'].join("\n")
 
+    # Now build the output
+    # First let's show upgraded modules
+    if ! upgraded.empty?
+      puts "\n\n#### These modules have been upgraded ####"
+      upgraded.each do |u|
+        puts "Module #{u.name} - #{u.current_version} -> #{u.latest_version}"
+      end
+    end
+
+    # Show added modules
+    if ! added.empty?
+      puts "\n\n#### These modules have been added ####"
+      added.each do |a|
+        puts "Module #{a.name} #{a.latest_version}"
+      end
+    end
+
+    # Warnings time
+    if ! not_found.empty?
+      puts "\n\n#### Modules not found and removed from Puppetfile ####"
+      not_found.each do |n|
+        puts "Module #{n.name}"
+      end
+    end
+
+    if ! deprecated.empty?
+      puts "\n\n#### Deprecated modules removed from Puppetfile ####"
+      deprecated.each do |d|
+        puts "Module #{d.name}"
+      end
+    end
+
+    # Write the non-forge lines
     fh.puts lines - forge
-    puts "\n#### Your Puppetfile is now available at #{output} ####"
+    puts "\n#### Your Puppetfile is now available at #{output} ####\n\n"
   end
 end
 
